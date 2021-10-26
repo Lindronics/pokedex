@@ -5,7 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lindronics/pokedex/service"
+	"github.com/lindronics/pokedex/external/pokeapi"
+	"github.com/lindronics/pokedex/external/translation"
 )
 
 func main() {
@@ -22,7 +23,7 @@ func getBasicInformation(ctx *gin.Context) {
 	if !ok {
 		log.Fatal("param")
 	}
-	pokemon := service.GetFullInfo(name)
+	pokemon := pokeapi.GetPokemon(name)
 	ctx.JSON(http.StatusOK, pokemon)
 }
 
@@ -31,7 +32,7 @@ func getTranslatedInformation(ctx *gin.Context) {
 	if !ok {
 		log.Fatal("param")
 	}
-	pokemon := service.GetFullInfo(name)
-	// TODO translation
+	pokemon := pokeapi.GetPokemon(name)
+	pokemon.Description = translation.TranslateText(pokemon.Description, translation.Shakespeare)
 	ctx.JSON(http.StatusOK, pokemon)
 }
