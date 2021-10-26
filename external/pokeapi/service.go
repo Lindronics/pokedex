@@ -14,8 +14,8 @@ const (
 )
 
 func GetPokemon(name string) model.FullPokemon {
-	pokemon := getPokemon(name)
-	species := getPokemonSpecies(pokemon.Species.Name)
+	pokemon, _ := getPokemon(name)
+	species, _ := getPokemonSpecies(pokemon.Species.Name)
 
 	flavourTexts := make([]string, 0)
 	for _, description := range species.FlavorTexts {
@@ -27,28 +27,34 @@ func GetPokemon(name string) model.FullPokemon {
 		Name:        pokemon.Name,
 		Habitat:     species.Habitat.Name,
 		IsLegendary: species.IsLegendary,
-		Description: strings.Join(flavourTexts, " ")[:100],
+		Description: strings.Join(flavourTexts, " ")[:100], // TODO
 	}
 }
 
-func getPokemon(name string) Pokemon {
-	body := external.GetCall("pokemon", name)
+func getPokemon(name string) (*Pokemon, error) {
+	body, err := external.GetCall(pokeApiUrl, "pokemon", name)
+	if err != nil {
+		return nil, err
+	}
 
 	var pokemon Pokemon
-	err := json.Unmarshal(body, &pokemon)
-	if err != nil {
-		log.Fatal("Response body corrupted")
-	}
-	return pokemon
-}
-
-func getPokemonSpecies(name string) PokemonSpecies {
-	body := external.GetCall("pokemon-species", name)
-
-	var species PokemonSpecies
-	err := json.Unmarshal(body, &species)
+	err = json.Unmarshal(body, &pokemon)
 	if err != nil {
 		log.Fatal("Response body corrupted", err)
 	}
-	return species
+	return &pokemon, nil
+}
+
+func getPokemonSpecies(name string) (*PokemonSpecies, error) {
+	body, err := external.GetCall(pokeApiUrl, "pokemon-species", name)
+	if err != nil {
+		return nil, err
+	}
+
+	var species PokemonSpecies
+	err = json.Unmarshal(body, &species)
+	if err != nil {
+		log.Fatal("Response body corrupted", err)
+	}
+	return &species, nil
 }

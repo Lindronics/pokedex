@@ -24,7 +24,7 @@ func getBasicInformation(ctx *gin.Context) {
 		log.Fatal("param")
 	}
 	pokemon := pokeapi.GetPokemon(name)
-	ctx.JSON(http.StatusOK, pokemon)
+	ctx.IndentedJSON(http.StatusOK, pokemon)
 }
 
 func getTranslatedInformation(ctx *gin.Context) {
@@ -34,5 +34,5 @@ func getTranslatedInformation(ctx *gin.Context) {
 	}
 	pokemon := pokeapi.GetPokemon(name)
 	pokemon.Description = translation.TranslateText(pokemon.Description, translation.Shakespeare)
-	ctx.JSON(http.StatusOK, pokemon)
+	ctx.IndentedJSON(http.StatusOK, pokemon)
 }

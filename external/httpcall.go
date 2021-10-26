@@ -10,41 +10,56 @@ import (
 	"path"
 )
 
-func GetCall(baseUrl string, resourcePath string) []byte {
-	resp, err := http.Get(joinPath(baseUrl, resourcePath))
+func GetCall(baseUrl, resourcePath, pathParam string) ([]byte, error) {
+	requestUrl := joinPath(baseUrl, resourcePath, pathParam)
+
+	log.Printf("Executing GET %s", requestUrl)
+	resp, err := http.Get(requestUrl)
 	if err != nil {
-		log.Fatal("Response error")
+		log.Printf("Error during HTTP call")
+		return nil, err
 	}
+	log.Printf("Received response with status code %d", resp.StatusCode)
+
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal("Response body corrupted")
-	}
-	return body
+	return readResponse(resp)
 }
 
-func PostCall(baseUrl string, resourcePath string, requestBody interface{}) []byte {
+func PostCall(baseUrl string, resourcePath string, requestBody interface{}) ([]byte, error) {
 	jsonStr, err := json.Marshal(requestBody)
 	if err != nil {
-		log.Fatal("Error during serialisation")
+		log.Printf("Error during request object serialisation")
+		return nil, err
 	}
-	resp, err := http.Post(joinPath(baseUrl, resourcePath), "application/json", bytes.NewBuffer(jsonStr))
+
+	requestUrl := joinPath(baseUrl, resourcePath)
+
+	log.Printf("Executing POST %s; Request Body: %s", requestUrl, jsonStr)
+	resp, err := http.Post(requestUrl, "application/json", bytes.NewBuffer(jsonStr))
 	if err != nil {
-		log.Fatal("Response error")
+		log.Printf("Error during HTTP call")
+		return nil, err
 	}
+	log.Printf("Received response with status code %d", resp.StatusCode)
+
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal("Response body corrupted")
-	}
-	return body
+	return readResponse(resp)
 }
 
-func joinPath(baseUrl, resourcePath string) string {
+func joinPath(baseUrl string, paths ...string) string {
 	u, err := url.Parse(baseUrl)
 	if err != nil {
-		log.Fatal("Error parsing URL")
+		log.Printf("Error parsing URL")
 	}
-	u.Path = path.Join(u.Path, resourcePath)
+	allPaths := append([]string{u.Path}, paths...)
+	u.Path = path.Join(allPaths...)
 	return u.String()
+}
+
+func readResponse(resp *http.Response) ([]byte, error) {
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Response body could not be read")
+	}
+	return body, err
 }

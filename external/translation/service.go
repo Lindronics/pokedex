@@ -17,7 +17,7 @@ const (
 )
 
 func TranslateText(text string, translator Translator) string {
-	responseBody := external.PostCall(translatorApiUrl, string(translator), text)
+	responseBody, _ := external.PostCall(translatorApiUrl, string(translator), Request{text})
 	var response Response
 	err := json.Unmarshal(responseBody, &response)
 	if err != nil {
