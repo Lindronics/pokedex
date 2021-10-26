@@ -3,6 +3,7 @@ package external
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -10,56 +11,92 @@ import (
 	"path"
 )
 
-func GetCall(baseUrl, resourcePath, pathParam string) ([]byte, error) {
-	requestUrl := joinPath(baseUrl, resourcePath, pathParam)
+type HttpError struct {
+	ResponseCode int
+	Message      string
+	Cause        error
+}
+
+func (err *HttpError) Error() string {
+	return err.Message
+}
+
+func NewServiceError(responseCode int, message string, err error) *HttpError {
+	log.Printf("%s; Cause: %s\n", message, err)
+	return &HttpError{responseCode, message, err}
+}
+
+func GetCall(baseUrl, resourcePath, pathParam string, responseObject interface{}) *HttpError {
+	requestUrl, errr := joinPath(baseUrl, resourcePath, pathParam)
+	if errr != nil {
+		return errr
+	}
 
 	log.Printf("Executing GET %s", requestUrl)
 	resp, err := http.Get(requestUrl)
 	if err != nil {
 		log.Printf("Error during HTTP call")
-		return nil, err
+		return &HttpError{500, "Error during HTTP call", err}
 	}
 	log.Printf("Received response with status code %d", resp.StatusCode)
-
-	defer resp.Body.Close()
-	return readResponse(resp)
-}
-
-func PostCall(baseUrl string, resourcePath string, requestBody interface{}) ([]byte, error) {
-	jsonStr, err := json.Marshal(requestBody)
-	if err != nil {
-		log.Printf("Error during request object serialisation")
-		return nil, err
+	if resp.StatusCode != http.StatusOK {
+		return NewServiceError(mapResponseCode(resp.StatusCode), fmt.Sprintf("Response %d from GET %s", resp.StatusCode, requestUrl), nil)
 	}
 
-	requestUrl := joinPath(baseUrl, resourcePath)
+	defer resp.Body.Close()
+	return readResponse(resp, responseObject)
+}
+
+func PostCall(baseUrl string, resourcePath string, requestObject interface{}, responseObject interface{}) *HttpError {
+	requestUrl, errr := joinPath(baseUrl, resourcePath)
+	if errr != nil {
+		return errr
+	}
+
+	jsonStr, err := json.Marshal(requestObject)
+	if err != nil {
+		return NewServiceError(500, "Error during request object serialisation", err)
+	}
 
 	log.Printf("Executing POST %s; Request Body: %s", requestUrl, jsonStr)
 	resp, err := http.Post(requestUrl, "application/json", bytes.NewBuffer(jsonStr))
 	if err != nil {
-		log.Printf("Error during HTTP call")
-		return nil, err
+		return NewServiceError(500, "Error during HTTP call", err)
 	}
 	log.Printf("Received response with status code %d", resp.StatusCode)
+	if resp.StatusCode != http.StatusOK {
+		return NewServiceError(mapResponseCode(resp.StatusCode), fmt.Sprintf("Response %d from POST %s", resp.StatusCode, requestUrl), nil)
+	}
 
 	defer resp.Body.Close()
-	return readResponse(resp)
+	return readResponse(resp, responseObject)
 }
 
-func joinPath(baseUrl string, paths ...string) string {
+func joinPath(baseUrl string, paths ...string) (string, *HttpError) {
 	u, err := url.Parse(baseUrl)
 	if err != nil {
-		log.Printf("Error parsing URL")
+		return "", NewServiceError(500, "Error parsing URL", err)
 	}
 	allPaths := append([]string{u.Path}, paths...)
 	u.Path = path.Join(allPaths...)
-	return u.String()
+	return u.String(), nil
 }
 
-func readResponse(resp *http.Response) ([]byte, error) {
+func readResponse(resp *http.Response, object interface{}) *HttpError {
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("Response body could not be read")
+		return NewServiceError(http.StatusBadGateway, "Response body could not be read", err)
 	}
-	return body, err
+	err = json.Unmarshal(body, object)
+	if err != nil {
+		return NewServiceError(http.StatusBadGateway, "Response body could not be read", err)
+	}
+	return nil
+}
+
+func mapResponseCode(code int) int {
+	if code == http.StatusNotFound {
+		return code
+	}
+	return http.StatusBadGateway
 }

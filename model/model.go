@@ -1,8 +1,12 @@
 package model
 
-type FullPokemon struct {
+type PokemonResponse struct {
 	Name        string `json:"name"`
-	Description string
-	Habitat     string
-	IsLegendary bool
+	Description string `json:"description"`
+	Habitat     string `json:"habitat"`
+	IsLegendary bool   `json:"is_legendary"`
+}
+
+type ErrorResponse struct {
+	Message string `json:"message"`
 }

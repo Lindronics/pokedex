@@ -1,8 +1,6 @@
 package pokeapi
 
 import (
-	"encoding/json"
-	"log"
 	"strings"
 
 	"github.com/lindronics/pokedex/external"
@@ -13,9 +11,16 @@ const (
 	pokeApiUrl = "https://pokeapi.co/api/v2"
 )
 
-func GetPokemon(name string) model.FullPokemon {
-	pokemon, _ := getPokemon(name)
-	species, _ := getPokemonSpecies(pokemon.Species.Name)
+func GetPokemonProfile(name string) (*model.PokemonResponse, *external.HttpError) {
+	pokemon, err := getPokemon(name)
+	if err != nil {
+		return nil, err
+	}
+
+	species, err := getPokemonSpecies(pokemon.Species.Name)
+	if err != nil {
+		return nil, err
+	}
 
 	flavourTexts := make([]string, 0)
 	for _, description := range species.FlavorTexts {
@@ -23,38 +28,23 @@ func GetPokemon(name string) model.FullPokemon {
 			flavourTexts = append(flavourTexts, description.Text)
 		}
 	}
-	return model.FullPokemon{
+
+	return &model.PokemonResponse{
 		Name:        pokemon.Name,
 		Habitat:     species.Habitat.Name,
 		IsLegendary: species.IsLegendary,
 		Description: strings.Join(flavourTexts, " ")[:100], // TODO
-	}
+	}, nil
 }
 
-func getPokemon(name string) (*Pokemon, error) {
-	body, err := external.GetCall(pokeApiUrl, "pokemon", name)
-	if err != nil {
-		return nil, err
-	}
-
+func getPokemon(name string) (*Pokemon, *external.HttpError) {
 	var pokemon Pokemon
-	err = json.Unmarshal(body, &pokemon)
-	if err != nil {
-		log.Fatal("Response body corrupted", err)
-	}
-	return &pokemon, nil
+	err := external.GetCall(pokeApiUrl, "pokemon", name, &pokemon)
+	return &pokemon, err
 }
 
-func getPokemonSpecies(name string) (*PokemonSpecies, error) {
-	body, err := external.GetCall(pokeApiUrl, "pokemon-species", name)
-	if err != nil {
-		return nil, err
-	}
-
+func getPokemonSpecies(name string) (*PokemonSpecies, *external.HttpError) {
 	var species PokemonSpecies
-	err = json.Unmarshal(body, &species)
-	if err != nil {
-		log.Fatal("Response body corrupted", err)
-	}
-	return &species, nil
+	err := external.GetCall(pokeApiUrl, "pokemon-species", name, &species)
+	return &species, err
 }

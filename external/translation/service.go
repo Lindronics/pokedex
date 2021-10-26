@@ -1,9 +1,6 @@
 package translation
 
 import (
-	"encoding/json"
-	"log"
-
 	"github.com/lindronics/pokedex/external"
 )
 
@@ -16,12 +13,8 @@ const (
 	Yoda        Translator = "yoda"
 )
 
-func TranslateText(text string, translator Translator) string {
-	responseBody, _ := external.PostCall(translatorApiUrl, string(translator), Request{text})
+func TranslateText(text string, translator Translator) (string, *external.HttpError) {
 	var response Response
-	err := json.Unmarshal(responseBody, &response)
-	if err != nil {
-		log.Fatal("Response body corrupted")
-	}
-	return response.Contents.Translated
+	err := external.PostCall(translatorApiUrl, string(translator), Request{text}, &response)
+	return response.Contents.Translated, err
 }
