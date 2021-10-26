@@ -43,7 +43,12 @@ func getTranslatedInformation(ctx *gin.Context) {
 		ctx.IndentedJSON(err.ResponseCode, model.ErrorResponse{Message: err.Message})
 		return
 	}
-	pokemon.Description, err = translation.TranslateText(pokemon.Description, translation.Shakespeare)
+	switch pokemon.Habitat {
+	case pokeapi.HabitatCave:
+		pokemon.Description, err = translation.TranslateText(pokemon.Description, translation.Yoda)
+	default:
+		pokemon.Description, err = translation.TranslateText(pokemon.Description, translation.Shakespeare)
+	}
 	if err != nil {
 		ctx.IndentedJSON(err.ResponseCode, model.ErrorResponse{Message: err.Message})
 		return

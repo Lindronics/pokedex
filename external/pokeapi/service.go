@@ -23,17 +23,18 @@ func GetPokemonProfile(name string) (*model.PokemonResponse, *external.HttpError
 	}
 
 	flavourTexts := make([]string, 0)
-	for _, description := range species.FlavorTexts {
-		if description.Language.Name == "en" {
-			flavourTexts = append(flavourTexts, description.Text)
+	for _, text := range species.FlavorTexts {
+		if text.Language.Name == "en" {
+			flavourTexts = append(flavourTexts, text.Text)
 		}
 	}
+	description := strings.Replace(strings.Join(flavourTexts, " "), "\n", " ", -1)
 
 	return &model.PokemonResponse{
 		Name:        pokemon.Name,
 		Habitat:     species.Habitat.Name,
 		IsLegendary: species.IsLegendary,
-		Description: strings.Join(flavourTexts, " ")[:100], // TODO
+		Description: description,
 	}, nil
 }
 

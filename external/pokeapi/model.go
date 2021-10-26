@@ -1,5 +1,7 @@
 package pokeapi
 
+const HabitatCave = "cave"
+
 type Pokemon struct {
 	Name        string      `json:"name"`
 	Description string      `json:"description"`
