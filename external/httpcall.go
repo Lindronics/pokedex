@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+
+	"github.com/asaskevich/govalidator"
 )
 
 type HttpError struct {
@@ -27,9 +29,9 @@ func NewServiceError(responseCode int, message string, err error) *HttpError {
 }
 
 func GetCall(baseUrl, resourcePath, pathParam string, responseObject interface{}) *HttpError {
-	requestUrl, errr := joinPath(baseUrl, resourcePath, pathParam)
-	if errr != nil {
-		return errr
+	requestUrl, err := joinPath(baseUrl, resourcePath, pathParam)
+	if err != nil {
+		return NewServiceError(500, "Error parsing URL", err)
 	}
 
 	log.Printf("Executing GET %s", requestUrl)
@@ -48,9 +50,9 @@ func GetCall(baseUrl, resourcePath, pathParam string, responseObject interface{}
 }
 
 func PostCall(baseUrl string, resourcePath string, requestObject interface{}, responseObject interface{}) *HttpError {
-	requestUrl, errr := joinPath(baseUrl, resourcePath)
-	if errr != nil {
-		return errr
+	requestUrl, err := joinPath(baseUrl, resourcePath)
+	if err != nil {
+		return NewServiceError(500, "Error parsing URL", err)
 	}
 
 	jsonStr, err := json.Marshal(requestObject)
@@ -72,10 +74,10 @@ func PostCall(baseUrl string, resourcePath string, requestObject interface{}, re
 	return readResponse(resp, responseObject)
 }
 
-func joinPath(baseUrl string, paths ...string) (string, *HttpError) {
+func joinPath(baseUrl string, paths ...string) (string, error) {
 	u, err := url.Parse(baseUrl)
 	if err != nil {
-		return "", NewServiceError(500, "Error parsing URL", err)
+		return "", err
 	}
 	allPaths := append([]string{u.Path}, paths...)
 	u.Path = path.Join(allPaths...)
@@ -91,12 +93,20 @@ func readResponse(resp *http.Response, object interface{}) *HttpError {
 	if err != nil {
 		return NewServiceError(http.StatusBadGateway, "Response body could not be read", err)
 	}
+	log.Println(object)
+	_, err = govalidator.ValidateStruct(object)
+	if err != nil {
+		return NewServiceError(http.StatusBadGateway, "Response object is invalid", err)
+	}
 	return nil
 }
 
 func mapResponseCode(code int) int {
 	if code == http.StatusNotFound {
 		return code
+	}
+	if code < 500 {
+		return http.StatusInternalServerError
 	}
 	return http.StatusBadGateway
 }

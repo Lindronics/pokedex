@@ -5,11 +5,11 @@ type Request struct {
 }
 
 type Response struct {
-	Contents ResponseContents `json:"contents"`
+	Contents ResponseContents `json:"contents" valid:"required"`
 }
 
 type ResponseContents struct {
-	Translated  string `json:"translated"`
-	Text        string `json:"text"`
-	Translation string `json:"translation"`
+	Translated  string `json:"translated" valid:"required"`
+	Text        string `json:"text" valid:"required"`
+	Translation string `json:"translation" valid:"required"`
 }
