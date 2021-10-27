@@ -11,21 +11,28 @@ import (
 
 const PokeApiUrlParam string = "POKEAPI_URL"
 
+// Provider retrieves a Pokemon profile for a given name.
 type Provider interface {
 	GetPokemonProfile(string) (*model.PokemonResponse, *external.CallError)
 }
 
-type HttpProvider struct{}
+type HttpProvider struct {
+	BaseUrl string
+}
+
+func NewHttpProvider() *HttpProvider {
+	return &HttpProvider{os.Getenv(PokeApiUrlParam)}
+}
 
 // GetPokemonProfile retrieves a PokemonResponse object by calling /pokemon and /pokemon-species/
 // If an error occurs, returns nil and an error object containing the status code to return.
 func (p *HttpProvider) GetPokemonProfile(name string) (*model.PokemonResponse, *external.CallError) {
-	pokemon, err := getPokemon(name)
+	pokemon, err := p.getPokemon(name)
 	if err != nil {
 		return nil, err
 	}
 
-	species, err := getPokemonSpecies(pokemon.Species.Name)
+	species, err := p.getPokemonSpecies(pokemon.Species.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -53,15 +60,15 @@ func (p *HttpProvider) GetPokemonProfile(name string) (*model.PokemonResponse, *
 }
 
 // getPokemon calls /pokemon and returns a Pokemon or an error
-func getPokemon(name string) (*Pokemon, *external.CallError) {
+func (p *HttpProvider) getPokemon(name string) (*Pokemon, *external.CallError) {
 	var pokemon Pokemon
-	err := external.GetCall(os.Getenv(PokeApiUrlParam), "pokemon", name, &pokemon)
+	err := external.GetCall(p.BaseUrl, "pokemon", name, &pokemon)
 	return &pokemon, err
 }
 
 // getPokemon calls /pokemon-species and returns a PokemonSpecies or an error
-func getPokemonSpecies(name string) (*PokemonSpecies, *external.CallError) {
+func (p *HttpProvider) getPokemonSpecies(name string) (*PokemonSpecies, *external.CallError) {
 	var species PokemonSpecies
-	err := external.GetCall(os.Getenv(PokeApiUrlParam), "pokemon-species", name, &species)
+	err := external.GetCall(p.BaseUrl, "pokemon-species", name, &species)
 	return &species, err
 }

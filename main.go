@@ -10,12 +10,11 @@ import (
 )
 
 func main() {
-	setupServer(&pokeapi.HttpProvider{}, &translation.HttpProvider{}).Run()
+	setupServer(pokeapi.NewHttpProvider(), translation.NewHttpProvider()).Run()
 }
 
 func setupServer(pokeapiProvider pokeapi.Provider, translator translation.Provider) *gin.Engine {
 	r := gin.Default()
-
 	r.GET("/pokemon/:name", getPokemon(pokeapiProvider))
 	r.GET("/pokemon/translated/:name", getTranslatedPokemon(pokeapiProvider, translator))
 	return r

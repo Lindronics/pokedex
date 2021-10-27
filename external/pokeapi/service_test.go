@@ -17,6 +17,8 @@ const (
 	path = "/pokemon/" + name
 )
 
+var provider *HttpProvider = NewHttpProvider()
+
 func mockExternalCallResponse(t *testing.T, externalResponseCode int, externalResponseBody string) (*Pokemon, *external.CallError) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
@@ -25,7 +27,7 @@ func mockExternalCallResponse(t *testing.T, externalResponseCode int, externalRe
 	defer os.Unsetenv(PokeApiUrlParam)
 
 	httpmock.RegisterResponder("GET", url+path, httpmock.NewStringResponder(externalResponseCode, externalResponseBody))
-	pokemon, err := getPokemon(name)
+	pokemon, err := provider.getPokemon(name)
 
 	callCountInfo := httpmock.GetCallCountInfo()
 	if i := callCountInfo["GET "+url+path]; i != 1 {
