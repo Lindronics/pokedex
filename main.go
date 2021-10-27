@@ -54,7 +54,7 @@ func getTranslatedPokemon(pokeapiProvider pokeapi.Provider, translator translati
 			return
 		}
 		var translatorType translation.TranslatorType
-		if pokemon.Habitat == pokeapi.HabitatCave {
+		if pokemon.Habitat == pokeapi.HabitatCave || pokemon.IsLegendary {
 			translatorType = translation.Yoda
 		} else {
 			translatorType = translation.Shakespeare

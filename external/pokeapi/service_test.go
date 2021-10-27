@@ -17,14 +17,14 @@ const (
 	path = "/pokemon/" + name
 )
 
-var provider *HttpProvider = NewHttpProvider()
-
 func mockExternalCallResponse(t *testing.T, externalResponseCode int, externalResponseBody string) (*Pokemon, *external.CallError) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
 	os.Setenv(PokeApiUrlParam, url)
 	defer os.Unsetenv(PokeApiUrlParam)
+
+	var provider *HttpProvider = NewHttpProvider()
 
 	httpmock.RegisterResponder("GET", url+path, httpmock.NewStringResponder(externalResponseCode, externalResponseBody))
 	pokemon, err := provider.getPokemon(name)

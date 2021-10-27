@@ -53,9 +53,19 @@ func TestGetTranslatedPokemon(t *testing.T) {
 		{
 			&MockTranslator{},
 			&model.PokemonResponse{
-				Name:        name,
+				Name:        "name",
 				Description: "description",
 				Habitat:     "cave",
+				IsLegendary: false,
+			},
+			"description this translation just adds some text yoda",
+		},
+		{
+			&MockTranslator{},
+			&model.PokemonResponse{
+				Name:        "name",
+				Description: "description",
+				Habitat:     "forest",
 				IsLegendary: true,
 			},
 			"description this translation just adds some text yoda",
@@ -66,7 +76,7 @@ func TestGetTranslatedPokemon(t *testing.T) {
 				Name:        name,
 				Description: "description",
 				Habitat:     "forest",
-				IsLegendary: true,
+				IsLegendary: false,
 			},
 			"description this translation just adds some text shakespeare",
 		},
