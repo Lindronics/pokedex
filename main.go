@@ -54,15 +54,16 @@ func getTranslatedPokemon(pokeapiProvider pokeapi.Provider, translator translati
 			ctx.IndentedJSON(err.ResponseCode, model.ErrorResponse{Message: err.Message})
 			return
 		}
-		switch pokemon.Habitat {
-		case pokeapi.HabitatCave:
-			pokemon.Description, err = translator.TranslateText(pokemon.Description, translation.Yoda)
-		default:
-			pokemon.Description, err = translator.TranslateText(pokemon.Description, translation.Shakespeare)
+		var translatorType translation.TranslatorType
+		if pokemon.Habitat == pokeapi.HabitatCave {
+			translatorType = translation.Yoda
+		} else {
+			translatorType = translation.Shakespeare
 		}
-		if err != nil {
-			ctx.IndentedJSON(err.ResponseCode, model.ErrorResponse{Message: err.Message})
-			return
+
+		translatedDescription, err := translator.TranslateText(pokemon.Description, translatorType)
+		if err == nil && translatedDescription != "" {
+			pokemon.Description = translatedDescription
 		}
 		ctx.IndentedJSON(http.StatusOK, pokemon)
 	}

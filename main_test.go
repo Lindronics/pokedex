@@ -1,3 +1,6 @@
+// Tests the API handlers. For the sake of my time, I omitted the test for GetPokemon
+// and various error response tests. In a production environment, I would probably factor
+// most of the test logic out, making it easier to quickly test more scenarios.
 package main
 
 import (
@@ -17,78 +20,94 @@ const (
 	pokeApiUrl       = "https://test.com"
 	name             = "mewtwo"
 	translatorApiUrl = "https://test2.com"
-	description      = "some description"
-	translationText  = " this translation just adds some text"
 )
 
-var responseObject = &model.PokemonResponse{
-	Name:        name,
-	Description: description,
-	Habitat:     "cave",
-	IsLegendary: true,
+type MockPokeApi struct {
+	responseObject *model.PokemonResponse
 }
 
-type MockPokeApi struct{}
-
 func (t *MockPokeApi) GetPokemonProfile(string) (*model.PokemonResponse, *external.CallError) {
-	return responseObject, nil
+	return t.responseObject, nil
 }
 
 type MockTranslator struct{}
 
-func (t *MockTranslator) TranslateText(text string, translation translation.Translator) (string, *external.CallError) {
-	return text + " this translation just adds some text", nil
+func (t *MockTranslator) TranslateText(text string, translation translation.TranslatorType) (string, *external.CallError) {
+	return text + " this translation just adds some text " + string(translation), nil
 }
 
-func TestGetPokemonSuccess(t *testing.T) {
-	ts := httptest.NewServer(setupServer(&MockPokeApi{}, &MockTranslator{}))
-	defer ts.Close()
+type ErrorMockTranslator struct{}
 
-	resp, err := http.Get(fmt.Sprintf("%s/pokemon/%s", ts.URL, name))
-	if err != nil {
-		t.Errorf("Error during request")
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		t.Errorf("Invalid response")
-	}
-	var pokemon model.PokemonResponse
-	err = json.Unmarshal(body, &pokemon)
-	if err != nil {
-		t.Errorf("Invalid response")
-	}
-
-	if pokemon != *responseObject {
-		t.Errorf("Expected %v but got %v", *responseObject, pokemon)
-	}
+func (t *ErrorMockTranslator) TranslateText(text string, translation translation.TranslatorType) (string, *external.CallError) {
+	return "", external.NewCallError(500, "some error", fmt.Errorf(""))
 }
 
-func TestGetTranslatedPokemonSuccess(t *testing.T) {
-	ts := httptest.NewServer(setupServer(&MockPokeApi{}, &MockTranslator{}))
-	defer ts.Close()
-
-	resp, err := http.Get(fmt.Sprintf("%s/pokemon/translated/%s", ts.URL, name))
-	if err != nil {
-		t.Errorf("Error during request")
+// TestGetTranslatedPokemon tests the GetTranslatedPokemon handler.
+// Validates output based on various external API responses.
+func TestGetTranslatedPokemon(t *testing.T) {
+	tables := []struct {
+		translator     translation.Provider
+		responseObject *model.PokemonResponse
+		description    string
+	}{
+		{
+			&MockTranslator{},
+			&model.PokemonResponse{
+				Name:        name,
+				Description: "description",
+				Habitat:     "cave",
+				IsLegendary: true,
+			},
+			"description this translation just adds some text yoda",
+		},
+		{
+			&MockTranslator{},
+			&model.PokemonResponse{
+				Name:        name,
+				Description: "description",
+				Habitat:     "forest",
+				IsLegendary: true,
+			},
+			"description this translation just adds some text shakespeare",
+		},
+		{
+			&ErrorMockTranslator{},
+			&model.PokemonResponse{
+				Name:        name,
+				Description: "description",
+				Habitat:     "cave",
+				IsLegendary: true,
+			},
+			"description",
+		},
 	}
-	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		t.Errorf("Invalid response")
-	}
-	var pokemon model.PokemonResponse
-	err = json.Unmarshal(body, &pokemon)
-	if err != nil {
-		t.Errorf("Invalid response")
-	}
+	for _, table := range tables {
+		ts := httptest.NewServer(setupServer(&MockPokeApi{table.responseObject}, table.translator))
+		defer ts.Close()
 
-	translatedResponseObject := *responseObject
-	translatedResponseObject.Description = description + translationText
+		resp, err := http.Get(fmt.Sprintf("%s/pokemon/translated/%s", ts.URL, name))
+		if err != nil {
+			t.Errorf("Error during request")
+		}
+		defer resp.Body.Close()
 
-	if pokemon != translatedResponseObject {
-		t.Errorf("Expected %v but got %v", responseObject, pokemon)
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Errorf("Invalid response")
+		}
+		var pokemon model.PokemonResponse
+		err = json.Unmarshal(body, &pokemon)
+		if err != nil {
+			t.Errorf("Invalid response")
+		}
+
+		translatedResponseObject := *table.responseObject
+		translatedResponseObject.Description = table.description
+
+		if pokemon != translatedResponseObject {
+			t.Errorf("Expected %v but got %v", translatedResponseObject, pokemon)
+		}
+		ts.Close()
 	}
 }

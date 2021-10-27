@@ -1,11 +1,11 @@
 package translation
 
-// Translator reflects different translator options of the funtranslations API
-type Translator string
+// TranslatorType reflects different translator options of the funtranslations API
+type TranslatorType string
 
 const (
-	Shakespeare Translator = "shakespeare"
-	Yoda        Translator = "yoda"
+	Shakespeare TranslatorType = "shakespeare"
+	Yoda        TranslatorType = "yoda"
 )
 
 type Request struct {
