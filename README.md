@@ -1,5 +1,7 @@
 # Pokedex API exercise
 
+[![Docker Image CI](https://github.com/Lindronics/pokedex/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/Lindronics/pokedex/actions/workflows/build.yml)
+
 Contains a Pokedex REST API.
 
 ## How to run
