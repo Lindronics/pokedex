@@ -10,52 +10,61 @@ import (
 )
 
 func main() {
+	setupServer(&pokeapi.HttpProvider{}, &translation.HttpProvider{}).Run()
+}
+
+func setupServer(pokeapiProvider pokeapi.Provider, translator translation.Provider) *gin.Engine {
 	r := gin.Default()
 
-	r.GET("/pokemon/:name", getPokemon)
-	r.GET("/pokemon/translated/:name", getTranslatedPokemon)
-
-	r.Run()
+	r.GET("/pokemon/:name", getPokemon(pokeapiProvider))
+	r.GET("/pokemon/translated/:name", getTranslatedPokemon(pokeapiProvider, translator))
+	return r
 }
 
 // getPokemon retrieves a basic Pokemon profile by calling the pokeapi external API
-func getPokemon(ctx *gin.Context) {
-	name, ok := ctx.Params.Get("name")
-	if !ok {
-		ctx.IndentedJSON(400, model.ErrorResponse{Message: "Invalid request parameter"})
-		return
+func getPokemon(pokeapiProvider pokeapi.Provider) gin.HandlerFunc {
+	fn := func(ctx *gin.Context) {
+		name, ok := ctx.Params.Get("name")
+		if !ok {
+			ctx.IndentedJSON(400, model.ErrorResponse{Message: "Invalid request parameter"})
+			return
+		}
+		pokemon, err := pokeapiProvider.GetPokemonProfile(name)
+		if err != nil {
+			ctx.IndentedJSON(err.ResponseCode, model.ErrorResponse{Message: err.Message})
+			return
+		}
+		ctx.IndentedJSON(http.StatusOK, pokemon)
 	}
-	pokemon, err := pokeapi.GetPokemonProfile(name)
-	if err != nil {
-		ctx.IndentedJSON(err.ResponseCode, model.ErrorResponse{Message: err.Message})
-		return
-	}
-	ctx.IndentedJSON(http.StatusOK, pokemon)
+	return fn
 }
 
 // getTranslatedPokemon retrieves a translated Pokemon profile by calling the pokeapi external API
 // and the funtranslations external API.
 // If the Pokemon's habitat is "cave", the translation will be "Yoda", else "Shakespeare"
-func getTranslatedPokemon(ctx *gin.Context) {
-	name, ok := ctx.Params.Get("name")
-	if !ok {
-		ctx.IndentedJSON(400, model.ErrorResponse{Message: "Invalid request parameter"})
-		return
+func getTranslatedPokemon(pokeapiProvider pokeapi.Provider, translator translation.Provider) gin.HandlerFunc {
+	fn := func(ctx *gin.Context) {
+		name, ok := ctx.Params.Get("name")
+		if !ok {
+			ctx.IndentedJSON(400, model.ErrorResponse{Message: "Invalid request parameter"})
+			return
+		}
+		pokemon, err := pokeapiProvider.GetPokemonProfile(name)
+		if err != nil {
+			ctx.IndentedJSON(err.ResponseCode, model.ErrorResponse{Message: err.Message})
+			return
+		}
+		switch pokemon.Habitat {
+		case pokeapi.HabitatCave:
+			pokemon.Description, err = translator.TranslateText(pokemon.Description, translation.Yoda)
+		default:
+			pokemon.Description, err = translator.TranslateText(pokemon.Description, translation.Shakespeare)
+		}
+		if err != nil {
+			ctx.IndentedJSON(err.ResponseCode, model.ErrorResponse{Message: err.Message})
+			return
+		}
+		ctx.IndentedJSON(http.StatusOK, pokemon)
 	}
-	pokemon, err := pokeapi.GetPokemonProfile(name)
-	if err != nil {
-		ctx.IndentedJSON(err.ResponseCode, model.ErrorResponse{Message: err.Message})
-		return
-	}
-	switch pokemon.Habitat {
-	case pokeapi.HabitatCave:
-		pokemon.Description, err = translation.TranslateText(pokemon.Description, translation.Yoda)
-	default:
-		pokemon.Description, err = translation.TranslateText(pokemon.Description, translation.Shakespeare)
-	}
-	if err != nil {
-		ctx.IndentedJSON(err.ResponseCode, model.ErrorResponse{Message: err.Message})
-		return
-	}
-	ctx.IndentedJSON(http.StatusOK, pokemon)
+	return fn
 }

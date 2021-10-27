@@ -21,8 +21,8 @@ func mockExternalCallResponse(t *testing.T, externalResponseCode int, externalRe
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
-	os.Setenv(pokeApiUrlParam, url)
-	defer os.Unsetenv(pokeApiUrlParam)
+	os.Setenv(PokeApiUrlParam, url)
+	defer os.Unsetenv(PokeApiUrlParam)
 
 	httpmock.RegisterResponder("GET", url+path, httpmock.NewStringResponder(externalResponseCode, externalResponseBody))
 	pokemon, err := getPokemon(name)
