@@ -1,3 +1,4 @@
+// Contains client service and models for the pokeapi external API
 package pokeapi
 
 import (

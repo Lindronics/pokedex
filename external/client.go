@@ -46,11 +46,12 @@ func GetCall(baseUrl, resourcePath, pathParam string, responseObject interface{}
 		return &CallError{500, "Error during HTTP call", err}
 	}
 	log.Printf("Received response with status code %d", resp.StatusCode)
+	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
 		return NewCallError(mapResponseCode(resp.StatusCode), fmt.Sprintf("Response %d from GET %s", resp.StatusCode, requestUrl), nil)
 	}
 
-	defer resp.Body.Close()
 	return readResponse(resp, responseObject)
 }
 
@@ -72,11 +73,12 @@ func PostCall(baseUrl string, resourcePath string, requestObject interface{}, re
 		return NewCallError(500, "Error during HTTP call", err)
 	}
 	log.Printf("Received response with status code %d", resp.StatusCode)
+	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
 		return NewCallError(mapResponseCode(resp.StatusCode), fmt.Sprintf("Response %d from POST %s", resp.StatusCode, requestUrl), nil)
 	}
 
-	defer resp.Body.Close()
 	return readResponse(resp, responseObject)
 }
 
@@ -99,7 +101,7 @@ func readResponse(resp *http.Response, object interface{}) *CallError {
 	}
 	err = json.Unmarshal(body, object)
 	if err != nil {
-		return NewCallError(http.StatusBadGateway, "Response body could not be read", err)
+		return NewCallError(http.StatusBadGateway, "Response body could not be parsed into JSON", err)
 	}
 	log.Println(object)
 	_, err = govalidator.ValidateStruct(object)

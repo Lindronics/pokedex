@@ -1,9 +1,6 @@
-/*
-	Tests the pokeapi service.
-
-	I omitted the tests for the /pokemon-species endpoint, as they would look largely the same.
-	In a production environment they would of course be included.
-*/
+//	Tests the pokeapi service.
+//	I omitted the tests for the /pokemon-species endpoint, as they would look largely the same.
+//	In a production environment they would of course be included.
 package pokeapi
 
 import (
@@ -18,7 +15,7 @@ const (
 	url  = pokeApiUrl + "/pokemon/" + name
 )
 
-func mockExternalCallResponse(t *testing.T, externalResponseCode int, externalResponseBody string) (*Pokemon, *external.HttpError) {
+func mockExternalCallResponse(t *testing.T, externalResponseCode int, externalResponseBody string) (*Pokemon, *external.CallError) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
@@ -31,9 +28,7 @@ func mockExternalCallResponse(t *testing.T, externalResponseCode int, externalRe
 	return pokemon, err
 }
 
-/*
-	TestPokemonExternalCallSuccess tests error scenarios for unsuccessful calls to a mocked GET /pokemon external API
-*/
+// TestPokemonExternalCallSuccess tests error scenarios for unsuccessful calls to a mocked GET /pokemon external API
 func TestPokemonExternalCallErrors(t *testing.T) {
 	tables := []struct {
 		externalResponseCode int
@@ -60,9 +55,7 @@ func TestPokemonExternalCallErrors(t *testing.T) {
 	}
 }
 
-/*
-	TestPokemonExternalCallSuccess tests a successful call against a mocked GET /pokemon external API
-*/
+// TestPokemonExternalCallSuccess tests a successful call against a mocked GET /pokemon external API
 func TestPokemonExternalCallSuccess(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()

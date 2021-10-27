@@ -1,3 +1,4 @@
+// Contains client service and models for the funtranslations external API
 package translation
 
 import (
