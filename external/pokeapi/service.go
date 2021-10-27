@@ -30,7 +30,13 @@ func GetPokemonProfile(name string) (*model.PokemonResponse, *external.CallError
 			flavourTexts = append(flavourTexts, text.Text)
 		}
 	}
-	description := strings.Replace(strings.Join(flavourTexts, " "), "\n", " ", -1)
+
+	var description string
+	if len(flavourTexts) == 0 {
+		description = ""
+	} else {
+		description = strings.Replace(flavourTexts[0], "\n", " ", -1)
+	}
 
 	return &model.PokemonResponse{
 		Name:        pokemon.Name,

@@ -1,5 +1,5 @@
 //	Tests the pokeapi service.
-//	I omitted the tests for the /pokemon-species endpoint, as they would look largely the same.
+//	I omitted the tests for the /pokemon-species endpoint and GetPokemonProfile, as they would look largely the same.
 //	In a production environment they would of course be included.
 package pokeapi
 
