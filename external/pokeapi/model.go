@@ -1,6 +1,9 @@
 package pokeapi
 
-const HabitatCave = "cave"
+const (
+	HabitatCave = "cave"
+	LanguageEn  = "en"
+)
 
 type Pokemon struct {
 	Name    string      `json:"name" valid:"required"`

@@ -12,13 +12,14 @@ import (
 func main() {
 	r := gin.Default()
 
-	r.GET("/pokemon/:name", getBasicInformation)
-	r.GET("/pokemon/translated/:name", getTranslatedInformation)
+	r.GET("/pokemon/:name", getPokemon)
+	r.GET("/pokemon/translated/:name", getTranslatedPokemon)
 
 	r.Run()
 }
 
-func getBasicInformation(ctx *gin.Context) {
+// getPokemon retrieves a basic Pokemon profile by calling the pokeapi external API
+func getPokemon(ctx *gin.Context) {
 	name, ok := ctx.Params.Get("name")
 	if !ok {
 		ctx.IndentedJSON(400, model.ErrorResponse{Message: "Invalid request parameter"})
@@ -32,7 +33,10 @@ func getBasicInformation(ctx *gin.Context) {
 	ctx.IndentedJSON(http.StatusOK, pokemon)
 }
 
-func getTranslatedInformation(ctx *gin.Context) {
+// getTranslatedPokemon retrieves a translated Pokemon profile by calling the pokeapi external API
+// and the funtranslations external API.
+// If the Pokemon's habitat is "cave", the translation will be "Yoda", else "Shakespeare"
+func getTranslatedPokemon(ctx *gin.Context) {
 	name, ok := ctx.Params.Get("name")
 	if !ok {
 		ctx.IndentedJSON(400, model.ErrorResponse{Message: "Invalid request parameter"})
