@@ -16,12 +16,6 @@ import (
 	"github.com/lindronics/pokedex/model"
 )
 
-const (
-	pokeApiUrl       = "https://test.com"
-	name             = "mewtwo"
-	translatorApiUrl = "https://test2.com"
-)
-
 type MockPokeApi struct {
 	responseObject *model.PokemonResponse
 }
@@ -73,7 +67,7 @@ func TestGetTranslatedPokemon(t *testing.T) {
 		{
 			&MockTranslator{},
 			&model.PokemonResponse{
-				Name:        name,
+				Name:        "name",
 				Description: "description",
 				Habitat:     "forest",
 				IsLegendary: false,
@@ -83,7 +77,7 @@ func TestGetTranslatedPokemon(t *testing.T) {
 		{
 			&ErrorMockTranslator{},
 			&model.PokemonResponse{
-				Name:        name,
+				Name:        "name",
 				Description: "description",
 				Habitat:     "cave",
 				IsLegendary: true,
@@ -96,7 +90,7 @@ func TestGetTranslatedPokemon(t *testing.T) {
 		ts := httptest.NewServer(setupServer(&MockPokeApi{table.responseObject}, table.translator))
 		defer ts.Close()
 
-		resp, err := http.Get(fmt.Sprintf("%s/pokemon/translated/%s", ts.URL, name))
+		resp, err := http.Get(fmt.Sprintf("%s/pokemon/translated/%s", ts.URL, table.responseObject.Name))
 		if err != nil {
 			t.Errorf("Error during request")
 		}
@@ -118,6 +112,5 @@ func TestGetTranslatedPokemon(t *testing.T) {
 		if pokemon != translatedResponseObject {
 			t.Errorf("Expected %v but got %v", translatedResponseObject, pokemon)
 		}
-		ts.Close()
 	}
 }

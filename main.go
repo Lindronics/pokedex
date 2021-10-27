@@ -40,7 +40,7 @@ func getPokemon(pokeapiProvider pokeapi.Provider) gin.HandlerFunc {
 
 // getTranslatedPokemon retrieves a translated Pokemon profile by calling the pokeapi external API
 // and the funtranslations external API.
-// If the Pokemon's habitat is "cave", the translation will be "Yoda", else "Shakespeare"
+// If the Pokemon's habitat is "cave" or it is legendary, the translation will be "Yoda", else "Shakespeare"
 func getTranslatedPokemon(pokeapiProvider pokeapi.Provider, translator translation.Provider) gin.HandlerFunc {
 	fn := func(ctx *gin.Context) {
 		name, ok := ctx.Params.Get("name")
@@ -53,6 +53,7 @@ func getTranslatedPokemon(pokeapiProvider pokeapi.Provider, translator translati
 			ctx.IndentedJSON(err.ResponseCode, model.ErrorResponse{Message: err.Message})
 			return
 		}
+
 		var translatorType translation.TranslatorType
 		if pokemon.Habitat == pokeapi.HabitatCave || pokemon.IsLegendary {
 			translatorType = translation.Yoda
