@@ -4,6 +4,7 @@
 package pokeapi
 
 import (
+	"os"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
@@ -12,19 +13,25 @@ import (
 
 const (
 	name = "pikachu"
-	url  = pokeApiUrl + "/pokemon/" + name
+	url  = "https://test.com"
+	path = "/pokemon/" + name
 )
 
 func mockExternalCallResponse(t *testing.T, externalResponseCode int, externalResponseBody string) (*Pokemon, *external.CallError) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(externalResponseCode, externalResponseBody))
+	os.Setenv(pokeApiUrlParam, url)
+	defer os.Unsetenv(pokeApiUrlParam)
+
+	httpmock.RegisterResponder("GET", url+path, httpmock.NewStringResponder(externalResponseCode, externalResponseBody))
 	pokemon, err := getPokemon(name)
+
 	callCountInfo := httpmock.GetCallCountInfo()
-	if i := callCountInfo["GET "+url]; i != 1 {
-		t.Errorf("Must call %s exactly once but called %d times", url, i)
+	if i := callCountInfo["GET "+url+path]; i != 1 {
+		t.Errorf("Must call %s exactly once but called %d times", url+path, i)
 	}
+
 	return pokemon, err
 }
 

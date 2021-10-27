@@ -1,5 +1,13 @@
 package translation
 
+// Translator reflects different translator options of the funtranslations API
+type Translator string
+
+const (
+	Shakespeare Translator = "shakespeare"
+	Yoda        Translator = "yoda"
+)
+
 type Request struct {
 	Text string `json:"text"`
 }
