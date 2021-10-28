@@ -42,8 +42,7 @@ func GetCall(baseUrl, resourcePath, pathParam string, responseObject interface{}
 	log.Printf("Executing GET %s", requestUrl)
 	resp, err := http.Get(requestUrl)
 	if err != nil {
-		log.Printf("Error during HTTP call")
-		return &CallError{500, "Error during HTTP call", err}
+		return NewCallError(500, "Error during HTTP call", err)
 	}
 	log.Printf("Received response with status code %d", resp.StatusCode)
 	defer resp.Body.Close()
