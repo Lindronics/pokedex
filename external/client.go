@@ -36,13 +36,13 @@ func NewCallError(responseCode int, message string, err error) *CallError {
 func GetCall(baseUrl, resourcePath, pathParam string, responseObject interface{}) *CallError {
 	requestUrl, err := joinPath(baseUrl, resourcePath, pathParam)
 	if err != nil {
-		return NewCallError(500, "Error parsing URL", err)
+		return NewCallError(http.StatusInternalServerError, "Error parsing URL", err)
 	}
 
 	log.Printf("Executing GET %s", requestUrl)
 	resp, err := http.Get(requestUrl)
 	if err != nil {
-		return NewCallError(500, "Error during HTTP call", err)
+		return NewCallError(http.StatusInternalServerError, "Error during HTTP call", err)
 	}
 	log.Printf("Received response with status code %d", resp.StatusCode)
 	defer resp.Body.Close()
@@ -58,18 +58,18 @@ func GetCall(baseUrl, resourcePath, pathParam string, responseObject interface{}
 func PostCall(baseUrl string, resourcePath string, requestObject interface{}, responseObject interface{}) *CallError {
 	requestUrl, err := joinPath(baseUrl, resourcePath)
 	if err != nil {
-		return NewCallError(500, "Error parsing URL", err)
+		return NewCallError(http.StatusInternalServerError, "Error parsing URL", err)
 	}
 
 	jsonStr, err := json.Marshal(requestObject)
 	if err != nil {
-		return NewCallError(500, "Error during request object serialisation", err)
+		return NewCallError(http.StatusInternalServerError, "Error during request object serialisation", err)
 	}
 
 	log.Printf("Executing POST %s; Request Body: %s", requestUrl, jsonStr)
 	resp, err := http.Post(requestUrl, "application/json", bytes.NewBuffer(jsonStr))
 	if err != nil {
-		return NewCallError(500, "Error during HTTP call", err)
+		return NewCallError(http.StatusInternalServerError, "Error during HTTP call", err)
 	}
 	log.Printf("Received response with status code %d", resp.StatusCode)
 	defer resp.Body.Close()
@@ -119,7 +119,7 @@ func mapResponseCode(code int) int {
 	if code == http.StatusNotFound {
 		return code
 	}
-	if code < 500 {
+	if code < http.StatusInternalServerError {
 		return http.StatusInternalServerError
 	}
 	return http.StatusBadGateway
